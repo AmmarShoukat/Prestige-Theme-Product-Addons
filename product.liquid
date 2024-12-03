@@ -1,0 +1,99 @@
+         <form class="nws-atc-btn-frm" method="post" action="/cart/add" data-productid="{{ product.id }}" id="product_form_{{ product.id }}" accept-charset="UTF-8" enctype="multipart/form-data" novalidate="novalidate" data-product-form="">
+            <input type="hidden" name="form_type" value="product">
+            <input type="hidden" name="utf8" value="✓">
+            <input name="id[]" type="hidden" class="prd-variant" value="{{ product.selected_or_first_available_variant.id }}">
+            <div class="nws-main-btn">
+            {% if product.available %}
+            <button type="submit" value="Order Now" id="my_cla_btn"  class="ProductForm__AddToCart Button Button--primary" >{{ 'product.form.add_to_cart' | t }}</button>
+            {% else %}
+            <button type="button" value="Sold Out" class="ProductForm__AddToCart Button Button--primary" disabled="disabled">
+               {{- 'product.form.sold_out' | t -}}
+            </button>
+            {% endif %}
+            </div>
+                     {% if product.metafields.custom.addonitem != blank %}
+                <span class="addons-main-head">Complete the Look:</span>
+                  <div class="product-Addons-wrapper">
+                      {% for block in product.metafields.custom.addonitem.value %}
+                        {% assign pdp = block.product_item.value %}
+                        <div class="product-Addons"  data-prd-id="{{ pdp.selected_or_first_available_variant.id }}">
+                          <label class="amr-check">
+                            <input type="checkbox" name="id[]" value="{{ pdp.selected_or_first_available_variant.id }}">
+                            <span class="checkmark"></span>
+                          </label>
+                        <div class="pdp-set-item">
+                            <div class="top-content-wrap">
+                                <div class="product-set-img">
+                                    <img src="{{ pdp | img_url: '80x' }}" alt="{{ pdp.title }}">
+                                </div>
+                                <span class="set-product-title">{{ pdp.title }}</span>
+                                <div class="product-price">
+                                  {% if pdp.compare_at_price > pdp.price %}
+                                    <span class="compare-price">{{ pdp.compare_at_price | money }}</span>
+                                  {% endif %}
+                                  {{ pdp.price | money }}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      {% endfor %}
+                  </div>
+              {% endif %}
+          </form> 
+{% if product.available %}
+<button data-action="open-drawer" data-drawer-id="sidebar-cart" cus-cart-opener="opener" style="display:none;">
+auto openar
+</button>
+{% endif %}
+<script>
+document.querySelectorAll(".nws-atc-btn-frm").forEach(function(form) {
+  form.addEventListener("submit", function(e) {
+      e.preventDefault();
+      var formID = form.getAttribute("id");
+
+      var formData = new FormData(form);
+
+      fetch('/cart/add.js', {
+          method: 'POST',
+          body: formData,
+          headers: {
+              'Accept': 'application/json'
+          }
+      })
+      .then(response => response.json())
+      .then(function(resp) {
+          // Dispatch cart refresh event
+          document.documentElement.dispatchEvent(new CustomEvent('cart:refresh', {
+              bubbles: true
+          }));
+        var drawerBtn = document.querySelector('button[cus-cart-opener="opener"]');
+          if (drawerBtn) {
+            setTimeout(() => drawerBtn.click(), 500);
+          }
+      })
+      .catch(function(error) {
+          console.error("Error:", error);
+      });
+      return false;
+  });
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('.SizeSwatch__Radio').forEach(function (radio) {
+    radio.addEventListener('change', function () {
+      setTimeout(function () {
+        var selectedOption = document.querySelector('.prd-select-option option[selected="selected"]');
+        if (selectedOption) {
+          var selectedValue = selectedOption.value;
+          var prdVariantInput = document.querySelector('.prd-variant');
+          if (prdVariantInput) {
+            prdVariantInput.value = selectedValue;
+          }
+        }
+      }, 500);
+    });
+  });
+});
+
+
+</script>
